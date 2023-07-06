@@ -1051,7 +1051,12 @@ jsg::Promise<kj::String> R2Bucket::GetResult::text(jsg::Lock& js) {
     if (context.isInspectorEnabled()) {
       // httpMetadata can't be null because GetResult always populates it.
       KJ_IF_MAYBE(type, KJ_REQUIRE_NONNULL(httpMetadata).contentType) {
-        maybeWarnIfNotText(*type);
+        if (!isTextContent(*type)) {
+          context.logWarning(kj::str(
+              "Called .text() on an HTTP body which does not appear to be text. The body's "
+              "Content-Type is \"", *type, "\". The result will probably be corrupted. Consider "
+              "checking the Content-Type header before interpreting entities as text."));
+        }
       }
     }
 

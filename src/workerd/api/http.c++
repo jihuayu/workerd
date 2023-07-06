@@ -653,7 +653,12 @@ jsg::Promise<kj::String> Body::text(jsg::Lock& js) {
       auto& context = IoContext::current();
       if (context.isInspectorEnabled()) {
         KJ_IF_MAYBE(type, headersRef.get(jsg::ByteString(kj::str("Content-Type")))) {
-          maybeWarnIfNotText(*type);
+          if(!isTextContent(kj::str(type))){
+            context.logWarning(kj::str(
+                "Called .text() on an HTTP body which does not appear to be text. The body's "
+                "Content-Type is \"", *type, "\". The result will probably be corrupted. Consider "
+                "checking the Content-Type header before interpreting entities as text."));
+          }
         }
       }
 

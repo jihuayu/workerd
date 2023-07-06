@@ -148,4 +148,5 @@ kj::Maybe<jsg::V8Ref<v8::Object>> cloneRequestCf(
 
 void maybeWarnIfNotText(kj::StringPtr str);
 
+bool isTextContent(const kj::String& type);
 }  // namespace workerd::api

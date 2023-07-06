@@ -239,5 +239,24 @@ void maybeWarnIfNotText(kj::StringPtr str) {
         "Content-Type is \"", str, "\". The result will probably be corrupted. Consider "
         "checking the Content-Type header before interpreting entities as text."));
   }
+bool isTextContent(const kj::String& type) {
+  auto mimeType = type;
+  kj::ArrayPtr<const char> encoding = ""_kj;
+  KJ_IF_MAYBE(semiColon, type.findFirst(';')){
+    mimeType = kj::str(type.slice(0, *semiColon));
+    KJ_IF_MAYBE(charset, readContentTypeParameter(type, "charset")) {
+      encoding = *charset;
+    }
+  }
+  if (!mimeType.startsWith("text/") &&
+      encoding != "utf-8"_kj &&
+      encoding != "utf8"_kj &&
+      !mimeType.endsWith("xml") &&
+      !mimeType.endsWith("json") &&
+      !mimeType.endsWith("javascript")) {
+    return true;
+  }
+  return false;
 }
 }  // namespace workerd::api
+
