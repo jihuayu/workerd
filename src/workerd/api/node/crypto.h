@@ -51,7 +51,7 @@ public:
       bool InitGroup(kj::String& name);
   };
 
-  jsg::Ref<CryptoImpl::DiffieHellmanHandle> DiffieHellmanGroupHandle(kj::String name);
+  jsg::Ref<DiffieHellmanHandle> DiffieHellmanGroupHandle(kj::String name);
 
   // Primes
   kj::Array<kj::byte> randomPrime(uint32_t size, bool safe,
@@ -82,6 +82,27 @@ public:
       jsg::Optional<kj::Array<kj::byte>> _digest;
       kj::Own<EVP_MD_CTX> md_ctx;
       unsigned md_len;
+  };
+
+  // Hmac
+  class HmacHandle final: public jsg::Object {
+    public:
+      HmacHandle(jsg::Lock& js, kj::String& algorithm, kj::OneOf<kj::Array<kj::byte>,
+                 jsg::Ref<CryptoKey>>&_key);
+
+      int update(jsg::Lock& js, kj::Array<kj::byte> data);
+      kj::Array<kj::byte> digest(jsg::Lock& js);
+      static jsg::Ref<HmacHandle> constructor(jsg::Lock& js,
+          kj::String algorithm, kj::OneOf<kj::Array<kj::byte>, jsg::Ref<CryptoKey>> key);
+
+      JSG_RESOURCE_TYPE(HmacHandle) {
+        JSG_METHOD(update);
+        JSG_METHOD(digest);
+      };
+
+    private:
+      jsg::Optional<kj::Array<kj::byte>> _digest;
+      kj::Own<HMAC_CTX> hmac_ctx;
   };
 
   // Pbkdf2
@@ -163,8 +184,9 @@ public:
     // Primes
     JSG_METHOD(randomPrime);
     JSG_METHOD(checkPrimeSync);
-    // Hash
+    // Hash and Hmac
     JSG_NESTED_TYPE(HashHandle);
+    JSG_NESTED_TYPE(HmacHandle);
     // Pbkdf2
     JSG_METHOD(getPbkdf);
     // Keys
@@ -182,6 +204,7 @@ public:
     api::node::CryptoImpl,                             \
     api::node::CryptoImpl::DiffieHellmanHandle,        \
     api::node::CryptoImpl::HashHandle,                 \
+    api::node::CryptoImpl::HmacHandle,                 \
     api::node::CryptoImpl::KeyExportOptions,           \
     api::node::CryptoImpl::GenerateKeyPairOptions,     \
     api::node::CryptoImpl::CreateAsymmetricKeyOptions
